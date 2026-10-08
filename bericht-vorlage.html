@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aktien-Waechter Bericht</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1d2330; --muted: #667085; --line: #e4e7ec;
+    --up: #127a4a; --down: #c0392b; --accent: #2f5bd3; --band: rgba(47, 91, 211, .13); --dax: #98a2b3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111418; --card: #1a1f26; --text: #e6e9ef; --muted: #98a2b3; --line: #2a313b;
+            --up: #3ecf8e; --down: #ff6b5e; --accent: #7c9cff; --band: rgba(124, 156, 255, .16); --dax: #667085; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 36px 0 12px; }
+  .sub { color: var(--muted); margin: 0 0 18px; }
+  .info { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; color: var(--muted); font-size: 14px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 16px 0; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .kpi b { display: block; font-size: 22px; }
+  .kpi span { color: var(--muted); font-size: 13px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 18px; }
+  .head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; align-items: baseline; }
+  .head h3 { margin: 0; font-size: 18px; }
+  .head small { color: var(--muted); }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 13px; font-weight: 600; border: 1px solid var(--line); }
+  .pos { color: var(--up); } .neg { color: var(--down); }
+  .grid { display: grid; grid-template-columns: 3fr 2fr; gap: 18px; margin-top: 14px; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .chart { position: relative; height: 280px; }
+  .box h4 { margin: 0 0 6px; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .box p { margin: 0 0 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .chip { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; padding: 6px 6px; border-bottom: 1px solid var(--line); }
+  td { padding: 6px; border-bottom: 1px solid var(--line); }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  .scroll { overflow-x: auto; }
+  ul.news { list-style: none; margin: 0; padding: 0; }
+  ul.news li { padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  ul.news a { color: var(--text); text-decoration: none; } ul.news a:hover { text-decoration: underline; }
+  .meta { color: var(--muted); font-size: 12px; }
+  .tag { font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: 4px; margin-left: 4px; }
+  .tag.positiv { background: rgba(18,122,74,.15); color: var(--up); }
+  .tag.negativ { background: rgba(192,57,43,.15); color: var(--down); }
+  .tag.neuling { background: var(--band); color: var(--accent); }
+  .empty { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Aktien-Waechter</h1>
+  <p class="sub" id="stand"></p>
+  <div class="info">
+    <b>So liest du den Bericht:</b> Die blaue Flaeche ist die <b>Erwartung</b> - so haben sich Aktien in den letzten 5 Jahren
+    entwickelt, die wie beim Signal mindestens 20 % unter ihrem Jahreshoch lagen (die mittlere Haelfte aller Faelle, gestrichelt der Median).
+    Die farbige Linie ist der <b>echte Verlauf</b>, grau der DAX zum Vergleich. Das Analysten-Kursziel ist der Durchschnitt der
+    Bankanalysten (Quelle: Yahoo Finance). Schlagzeilen stammen aus den Feeds und sind verlinkt - die Artikel selbst liegen bei den Verlagen.
+    Bei den Guru-Depots: gruen = gekauft/aufgestockt, rot = reduziert, grau = unveraendert.
+    <b>Keine Anlageberatung</b>, nur Statistik und gesammelte Meinungen.
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <h2>Papierdepot: Scanner-Signale</h2>
+  <div id="signale"></div>
+
+  <h2>Watchlist</h2>
+  <div id="watchlist"></div>
+
+  <h2>Guru-Depots</h2>
+  <div id="gurus"></div>
+</main>
+
+<script>
+const D = /*__DATEN__*/null;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const nf = (x, d = 2) => x == null ? '-' : x.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = x => x == null ? '-' : (x >= 0 ? '+' : '') + nf(x, 1) + ' %';
+const cls = x => x >= 0 ? 'pos' : 'neg';
+const datum = s => s ? s.slice(8, 10) + '.' + s.slice(5, 7) + '.' : '';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const empf = { strong_buy: 'Starker Kauf', buy: 'Kaufen', hold: 'Halten', underperform: 'Untergewichten', sell: 'Verkaufen' };
+
+document.getElementById('stand').textContent =
+  `Stand ${D.erstellt} - Erwartungskorridor aus ${D.korridor.Faelle} vergleichbaren Faellen, Horizont ${D.horizont} Handelstage (~1 Monat)`;
+
+function newsListe(news) {
+  if (!news || !news.length) return '<p class="empty">Noch keine Schlagzeilen gesammelt - der Waechter sammelt ab jetzt laufend.</p>';
+  return '<ul class="news">' + news.map(n => `<li>
+      <a href="${esc(n.link)}" target="_blank" rel="noopener">${esc(n.titel)}</a>
+      <div class="meta">${esc(n.quelle)} - ${datum(n.zeit.slice(0, 10))} ${n.zeit.slice(11)}
+      ${(n.signal || '').split('+').filter(Boolean).map(s => `<span class="tag ${s}">${s}</span>`).join('')}</div></li>`).join('') + '</ul>';
+}
+
+function analystenText(a, kurs, wae) {
+  if (!a) return '<p class="empty">Kein Analysten-Kursziel verfuegbar.</p>';
+  const auf = (a.ziel / kurs - 1) * 100;
+  return `<p><b>${nf(a.ziel)} ${wae}</b> im Schnitt von ${a.anzahl} Analysten
+    (<span class="${cls(auf)}">${pct(auf)}</span> vom aktuellen Kurs), Spanne ${nf(a.tief)} bis ${nf(a.hoch)}.
+    Empfehlung: <b>${empf[a.empfehlung] || a.empfehlung || '-'}</b>.</p>`;
+}
+
+// --- KPIs Papierdepot ---
+const S = D.signale;
+if (S.length) {
+  const letzte = s => s.verlauf[s.verlauf.length - 1];
+  const r = S.map(s => letzte(s).aktie), rd = S.map(s => letzte(s).dax);
+  const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+  const laufend = S.filter(s => letzte(s).d > 0);
+  const besser = laufend.length ? `${laufend.filter(s => letzte(s).aktie > letzte(s).dax).length} von ${laufend.length}` : 'ab morgen';
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><span>Signale im Papierdepot</span><b>${S.length}</b></div>
+    <div class="kpi"><span>Durchschnitt seit Signal</span><b class="${cls(avg(r))}">${pct(avg(r))}</b></div>
+    <div class="kpi"><span>DAX im gleichen Zeitraum</span><b class="${cls(avg(rd))}">${pct(avg(rd))}</b></div>
+    <div class="kpi"><span>Besser als der DAX</span><b>${besser}</b></div>`;
+}
+
+// --- Signal-Karten ---
+const box = document.getElementById('signale');
+if (!S.length) box.innerHTML = '<p class="empty">Noch keine Signale.</p>';
+S.forEach((s, idx) => {
+  const v = s.verlauf, jetzt = v[v.length - 1], tag = Math.max(0, Math.min(jetzt.d, D.horizont));
+  const K = D.korridor;
+  let status = 'noch kein Handelstag seit Signal', stCls = '';
+  if (jetzt.d > 0) {
+    if (jetzt.aktie > K.p75[tag]) { status = 'besser als erwartet'; stCls = 'pos'; }
+    else if (jetzt.aktie < K.p25[tag]) { status = 'schlechter als erwartet'; stCls = 'neg'; }
+    else status = 'im Erwartungskorridor';
+  }
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `
+    <div class="head">
+      <h3>${esc(s.name)} <small>${esc(s.symbol)}</small></h3>
+      <div>
+        <span class="pill ${cls(jetzt.aktie)}">${pct(jetzt.aktie)} seit Signal</span>
+        <span class="pill">DAX ${pct(jetzt.dax)}</span>
+        <span class="pill ${stCls}">${status}</span>
+      </div>
+    </div>
+    <small class="meta">Signal am ${datum(s.datum)}${s.datum.slice(0, 4)} bei ${nf(s.kurs)} ${s.waehrung} - ${s.punkte} Scanner-Punkte -
+      heute ${nf(jetzt.kurs)} ${s.waehrung}, Handelstag ${jetzt.d} von ${D.horizont}</small>
+    <div class="grid">
+      <div class="chart"><canvas id="c${idx}"></canvas></div>
+      <div class="box">
+        <h4>Warum gemeldet (Scanner)</h4>
+        <div class="chips">${s.gruende.map(g => `<span class="chip">${esc(g)}</span>`).join('')}</div>
+        <h4>Erwartung</h4>
+        <p>Statistik: Nach ${D.horizont} Handelstagen im Median <b class="${cls(K.p50[D.horizont])}">${pct(K.p50[D.horizont])}</b>,
+          die Haelfte der Faelle zwischen ${pct(K.p25[D.horizont])} und ${pct(K.p75[D.horizont])}.</p>
+        ${analystenText(s.analysten, jetzt.kurs, s.waehrung)}
+      </div>
+    </div>
+    <div class="box" style="margin-top:12px"><h4>Schlagzeilen (Fachpresse)</h4>${newsListe(s.news)}</div>`;
+  box.appendChild(el);
+
+  // Achse: Handelstage relativ zum Signal, von -20 bis +20 (Zukunft leer)
+  const minD = v[0].d, maxD = Math.max(D.horizont, jetzt.d);
+  const labels = [], aktie = [], dax = [], lo = [], hi = [], med = [];
+  for (let d = minD; d <= maxD; d++) {
+    const p = v.find(x => x.d === d);
+    labels.push(p ? datum(p.datum) : 'T+' + d);
+    aktie.push(p ? p.aktie : null); dax.push(p ? p.dax : null);
+    const inK = d >= 0 && d <= D.horizont;
+    lo.push(inK ? K.p25[d] : null); hi.push(inK ? K.p75[d] : null); med.push(inK ? K.p50[d] : null);
+  }
+  new Chart(document.getElementById('c' + idx), {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: 'Erwartung (untere Grenze)', data: lo, borderWidth: 0, pointRadius: 0 },
+      { label: 'Erwartung (mittlere Haelfte)', data: hi, borderWidth: 0, pointRadius: 0, backgroundColor: css('--band'), fill: '-1' },
+      { label: 'Erwartung (Median)', data: med, borderColor: css('--accent'), borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0 },
+      { label: 'DAX', data: dax, borderColor: css('--dax'), borderWidth: 1.5, pointRadius: 0 },
+      { label: s.name, data: aktie, borderColor: jetzt.aktie >= 0 ? css('--up') : css('--down'), borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 4 },
+    ] },
+    options: {
+      maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, spanGaps: false,
+      plugins: {
+        legend: { labels: { color: css('--muted'), boxWidth: 12, filter: i => i.datasetIndex !== 0 } },
+        tooltip: { callbacks: { label: c => c.raw == null ? null : `${c.dataset.label}: ${pct(c.raw)}` } }
+      },
+      scales: {
+        x: { ticks: { color: css('--muted'), maxTicksLimit: 8 }, grid: { color: c => labels[c.index] === datum(s.datum) ? css('--muted') : 'transparent' } },
+        y: { ticks: { color: css('--muted'), callback: x => (x > 0 ? '+' : '') + x + ' %' }, grid: { color: css('--line') } }
+      }
+    }
+  });
+});
+
+// --- Watchlist-Karten ---
+const wbox = document.getElementById('watchlist');
+D.watchlist.forEach((w, idx) => {
+  const last = w.kurse[w.kurse.length - 1], first = w.kurse[0];
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `
+    <div class="head">
+      <h3>${esc(w.name)} <small>${esc(w.symbol)}</small></h3>
+      <div><span class="pill">${nf(last)} ${w.waehrung}</span>
+        <span class="pill ${cls(last / first - 1)}">${pct((last / first - 1) * 100)} in ${w.kurse.length} Handelstagen</span></div>
+    </div>
+    <div class="grid">
+      <div class="chart"><canvas id="w${idx}"></canvas></div>
+      <div class="box">
+        <h4>Deine Ziele</h4>
+        <p>Kaufen unter <b>${nf(w.kaufenUnter)}</b> (${pct((w.kaufenUnter / last - 1) * 100)}) -
+           Verkaufen ueber <b>${nf(w.verkaufenUeber)}</b> (${pct((w.verkaufenUeber / last - 1) * 100)})</p>
+        <h4>Analysten-Konsens</h4>
+        ${analystenText(w.analysten, last, w.waehrung)}
+      </div>
+    </div>
+    <div class="box" style="margin-top:12px"><h4>Schlagzeilen (Fachpresse)</h4>${newsListe(w.news)}</div>`;
+  wbox.appendChild(el);
+  const n = w.kurse.length, linie = (y) => Array(n).fill(y);
+  const ds = [
+    { label: 'Kurs', data: w.kurse, borderColor: css('--accent'), borderWidth: 2.5, pointRadius: 0 },
+    { label: 'Kaufziel', data: linie(w.kaufenUnter), borderColor: css('--up'), borderDash: [6, 4], borderWidth: 1.2, pointRadius: 0 },
+    { label: 'Verkaufsziel', data: linie(w.verkaufenUeber), borderColor: css('--down'), borderDash: [6, 4], borderWidth: 1.2, pointRadius: 0 },
+  ];
+  if (w.analysten) ds.push({ label: 'Analysten-Kursziel', data: linie(w.analysten.ziel), borderColor: css('--dax'), borderDash: [2, 3], borderWidth: 1.5, pointRadius: 0 });
+  new Chart(document.getElementById('w' + idx), {
+    type: 'line', data: { labels: w.tage.map(datum), datasets: ds },
+    options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: css('--muted'), boxWidth: 12 } },
+                 tooltip: { callbacks: { label: c => `${c.dataset.label}: ${nf(c.raw)} ${w.waehrung}` } } },
+      scales: { x: { ticks: { color: css('--muted'), maxTicksLimit: 8 }, grid: { display: false } },
+                y: { ticks: { color: css('--muted') }, grid: { color: css('--line') } } } }
+  });
+});
+
+// --- Guru-Karten ---
+const gbox = document.getElementById('gurus');
+if (!D.gurus || !D.gurus.length) gbox.innerHTML = '<p class="empty">Noch keine Guru-Depots geladen.</p>';
+(D.gurus || []).forEach((g, idx) => {
+  const P = g.positionen;
+  const farbe = a => a === 'Neu gekauft' || a === 'Aufgestockt' ? css('--up') : a === 'Reduziert' || a === 'Verkauft' ? css('--down') : css('--dax');
+  const bewegt = P.filter(p => p.aktivitaet);
+  const marke = s => D.bekannt.includes(s) ? ' <span class="tag neuling">deine Liste</span>' : '';
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `
+    <div class="head">
+      <h3>${esc(g.name)}</h3>
+      <div><span class="pill">${esc(g.periode)}</span> <span class="pill">Stichtag ${esc(g.stichtag)}</span> <span class="pill">${P.length} Aktien</span></div>
+    </div>
+    <small class="meta">Quelle: Pflichtmeldung (13F) an die US-Boersenaufsicht SEC, aufbereitet von
+      <a href="https://www.dataroma.com/m/holdings.php?m=${esc(g.code)}" target="_blank" rel="noopener">dataroma.com</a>.
+      Erscheint bis zu 45 Tage nach Quartalsende - zeigt also, was ${esc(g.name.split('(')[0].trim())} <i>damals</i> gemacht hat.</small>
+    <div class="grid">
+      <div class="chart" style="height:${Math.max(280, Math.min(P.length, 15) * 24)}px"><canvas id="g${idx}"></canvas></div>
+      <div class="box">
+        <h4>Bewegungen im Quartal</h4>
+        ${bewegt.length ? '<ul class="news">' + bewegt.map(p => `<li><b style="color:${farbe(p.aktivitaet)}">${p.aktivitaet}${p.aenderung ? ' ' + nf(p.aenderung, 0) + ' %' : ''}</b>
+          ${esc(p.firma)} <span class="meta">${esc(p.symbol)}</span>${marke(p.symbol)}
+          <div class="meta">${nf(p.anteil, 1)} % vom Depot - seit Quartalsende <span class="${cls(p.seitQuartal)}">${pct(p.seitQuartal)}</span></div></li>`).join('') + '</ul>'
+          : '<p class="empty">Keine Kaeufe oder Verkaeufe.</p>'}
+      </div>
+    </div>
+    <div class="box scroll" style="margin-top:12px"><h4>Groesste Positionen</h4>
+      <table><thead><tr><th>Aktie</th><th class="num">Anteil</th><th class="num">Kurs Quartalsende</th><th class="num">Kurs heute</th><th class="num">Seither</th></tr></thead><tbody>
+      ${P.slice(0, 15).map(p => `<tr><td>${esc(p.firma)} <span class="meta">${esc(p.symbol)}</span>${marke(p.symbol)}</td>
+        <td class="num">${nf(p.anteil, 1)} %</td><td class="num">${nf(p.kursQuartal)} $</td><td class="num">${nf(p.kursAktuell)} $</td>
+        <td class="num ${cls(p.seitQuartal)}">${pct(p.seitQuartal)}</td></tr>`).join('')}
+      </tbody></table></div>
+    <div class="box" style="margin-top:12px"><h4>Schlagzeilen ueber ${esc(g.name.split('(')[0].trim())}</h4>${newsListe(g.news)}</div>`;
+  gbox.appendChild(el);
+  const top = P.slice(0, 15);
+  new Chart(document.getElementById('g' + idx), {
+    type: 'bar',
+    data: { labels: top.map(p => p.symbol), datasets: [{ label: 'Anteil am Depot', data: top.map(p => p.anteil),
+      backgroundColor: top.map(p => farbe(p.aktivitaet)), borderRadius: 4 }] },
+    options: { indexAxis: 'y', maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: c => { const p = top[c.dataIndex]; return `${p.firma}: ${nf(p.anteil, 1)} %${p.aktivitaet ? ' - ' + p.aktivitaet : ''}`; } } } },
+      scales: { x: { ticks: { color: css('--muted'), callback: x => x + ' %' }, grid: { color: css('--line') } },
+                y: { ticks: { color: css('--muted') }, grid: { display: false } } } }
+  });
+});
+</script>
+</body>
+</html>

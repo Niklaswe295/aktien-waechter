@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aktien-Waechter Bericht</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1d2330; --muted: #667085; --line: #e4e7ec;
+    --up: #127a4a; --down: #c0392b; --accent: #2f5bd3; --band: rgba(47, 91, 211, .13); --dax: #98a2b3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111418; --card: #1a1f26; --text: #e6e9ef; --muted: #98a2b3; --line: #2a313b;
+            --up: #3ecf8e; --down: #ff6b5e; --accent: #7c9cff; --band: rgba(124, 156, 255, .16); --dax: #667085; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 36px 0 12px; }
+  .sub { color: var(--muted); margin: 0 0 18px; }
+  .info { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; color: var(--muted); font-size: 14px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 16px 0; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .kpi b { display: block; font-size: 22px; }
+  .kpi span { color: var(--muted); font-size: 13px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 18px; }
+  .head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; align-items: baseline; }
+  .head h3 { margin: 0; font-size: 18px; }
+  .head small { color: var(--muted); }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 13px; font-weight: 600; border: 1px solid var(--line); }
+  .pos { color: var(--up); } .neg { color: var(--down); }
+  .grid { display: grid; grid-template-columns: 3fr 2fr; gap: 18px; margin-top: 14px; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .chart { position: relative; height: 280px; }
+  .box h4 { margin: 0 0 6px; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .box p { margin: 0 0 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .chip { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; padding: 6px 6px; border-bottom: 1px solid var(--line); }
+  td { padding: 6px; border-bottom: 1px solid var(--line); }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  .scroll { overflow-x: auto; }
+  ul.news { list-style: none; margin: 0; padding: 0; }
+  ul.news li { padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  ul.news a { color: var(--text); text-decoration: none; } ul.news a:hover { text-decoration: underline; }
+  .meta { color: var(--muted); font-size: 12px; }
+  .tag { font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: 4px; margin-left: 4px; }
+  .tag.positiv { background: rgba(18,122,74,.15); color: var(--up); }
+  .tag.negativ { background: rgba(192,57,43,.15); color: var(--down); }
+  .tag.neuling { background: var(--band); color: var(--accent); }
+  .empty { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Aktien-Waechter</h1>
+  <p class="sub" id="stand"></p>
+  <div class="info">
+    <b>So liest du den Bericht:</b> Die blaue Flaeche ist die <b>Erwartung</b> - so haben sich Aktien in den letzten 5 Jahren
+    entwickelt, die wie beim Signal mindestens 20 % unter ihrem Jahreshoch lagen (die mittlere Haelfte aller Faelle, gestrichelt der Median).
+    Die farbige Linie ist der <b>echte Verlauf</b>, grau der DAX zum Vergleich. Das Analysten-Kursziel ist der Durchschnitt der
+    Bankanalysten (Quelle: Yahoo Finance). Schlagzeilen stammen aus den Feeds und sind verlinkt - die Artikel selbst liegen bei den Verlagen.
+    Bei den Guru-Depots: gruen = gekauft/aufgestockt, rot = reduziert, grau = unveraendert.
+    <b>Keine Anlageberatung</b>, nur Statistik und gesammelte Meinungen.
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <h2>Papierdepot: Scanner-Signale</h2>
+  <div id="signale"></div>
+
+  <h2>Watchlist</h2>
+  <div id="watchlist"></div>
+
+  <h2>Guru-Depots</h2>
+  <div id="gurus"></div>
+</main>
+
+<script>
+const D = {"erstellt":"08.10.2026 15:45","horizont":20,"korridor":{"Faelle":827,"p25":[0,-1.06,-1.55,-2.05,-2.29,-2.43,-2.65,-2.75,-2.93,-3.11,-3.04,-2.93,-3.36,-3.41,-3.39,-3.78,-3.46,-3.61,-3.48,-4.05,-3.96],"p50":[0,-0.05,0.2,0.14,0.39,0.48,0.55,0.63,0.85,1.14,1.01,1.52,1.47,1.46,1.54,1.6,2.12,2.09,2.24,2.35,2.37],"p75":[0,1.32,1.82,2.5,2.74,3.13,3.55,4.39,4.78,5.1,5.94,6.51,6.69,6.89,7.27,7.47,7.41,7.72,7.84,8.41,7.97],"Mittel":[0,0.24,0.19,0.34,0.47,0.46,0.63,0.8,1.05,1.18,1.41,1.79,1.79,1.83,1.93,1.94,2.09,2.22,2.47,2.78,2.61]},"signale":[{"symbol":"VNA.DE","name":"Vonovia SE","datum":"2026-10-08","kurs":16.355,"waehrung":"EUR","punkte":7,"gruende":["43 % unter 52W-Hoch","KGV 8,9","Dividende 7,5 %","Analysten: 2.1 - Buy","faellt noch stark"],"verlauf":[{"d":-20,"datum":"2026-09-10","aktie":9.72,"dax":1.63,"kurs":17.944999694824219},{"d":-19,"datum":"2026-09-11","aktie":10.7,"dax":2.47,"kurs":18.104999542236328},{"d":-18,"datum":"2026-09-14","aktie":9.91,"dax":1.95,"kurs":17.975000381469727},{"d":-17,"datum":"2026-09-15","aktie":10.12,"dax":1.8,"kurs":18.010000228881836},{"d":-16,"datum":"2026-09-16","aktie":9.35,"dax":2.34,"kurs":17.885000228881836},{"d":-15,"datum":"2026-09-17","aktie":9.94,"dax":3.06,"kurs":17.979999542236328},{"d":-14,"datum":"2026-09-18","aktie":8.22,"dax":1.41,"kurs":17.700000762939453},{"d":-13,"datum":"2026-09-21","aktie":6.88,"dax":2.49,"kurs":17.479999542236328},{"d":-12,"datum":"2026-09-22","aktie":6.21,"dax":2.51,"kurs":17.3700008392334},{"d":-11,"datum":"2026-09-23","aktie":5.99,"dax":1.83,"kurs":17.334999084472656},{"d":-10,"datum":"2026-09-24","aktie":4.49,"dax":1.25,"kurs":17.090000152587891},{"d":-9,"datum":"2026-09-25","aktie":4.98,"dax":1.82,"kurs":17.170000076293945},{"d":-8,"datum":"2026-09-28","aktie":4.28,"dax":1.69,"kurs":17.055000305175781},{"d":-7,"datum":"2026-09-29","aktie":6.42,"dax":1.79,"kurs":17.405000686645508},{"d":-6,"datum":"2026-09-30","aktie":3.94,"dax":0.99,"kurs":17},{"d":-5,"datum":"2026-10-01","aktie":2.35,"dax":-0.06,"kurs":16.739999771118164},{"d":-4,"datum":"2026-10-02","aktie":2.81,"dax":1.11,"kurs":16.815000534057617},{"d":-3,"datum":"2026-10-05","aktie":3.33,"dax":1.21,"kurs":16.899999618530273},{"d":-2,"datum":"2026-10-06","aktie":4.16,"dax":1.99,"kurs":17.034999847412109},{"d":-1,"datum":"2026-10-07","aktie":2.42,"dax":0.61,"kurs":16.75},{"d":0,"datum":"2026-10-08","aktie":0.67,"dax":0,"kurs":16.465000152587891}],"analysten":{"ziel":25.60625,"hoch":45.0,"tief":16.0,"anzahl":16,"empfehlung":"buy"},"news":[{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"","titel":"Noch schlimmer als bei Vonovia: Darum liegt die Short-Quote bei dieser Immobilienaktie bei unglaublichen 24,3 %","link":"https://www.wallstreet-online.de/nachricht/21483979-schlimmer-vonovia-short-quote-immobilienaktie-unglaublichen-24-3"},{"zeit":"2026-10-08 14:39","quelle":"Der Aktionaer","signal":"","titel":"Vonovia: Jetzt wackeln auch die letzten Chart-Bastionen","link":"https://www.deraktionaer.de/artikel/aktien/vonovia-jetzt-wackeln-auch-die-letzten-chart-bastionen-20412918.html?feed=directrssfeed"}]},{"symbol":"DTE.DE","name":"Deutsche Telekom AG","datum":"2026-10-08","kurs":26.98,"waehrung":"EUR","punkte":7,"gruende":["21 % unter 52W-Hoch","KGV 10,5","Dividende 3,7 %","Analysten: 1.7 - Buy"],"verlauf":[{"d":-20,"datum":"2026-09-10","aktie":3.34,"dax":1.63,"kurs":27.8799991607666},{"d":-19,"datum":"2026-09-11","aktie":5.97,"dax":2.47,"kurs":28.590000152587891},{"d":-18,"datum":"2026-09-14","aktie":7.23,"dax":1.95,"kurs":28.930000305175781},{"d":-17,"datum":"2026-09-15","aktie":7.12,"dax":1.8,"kurs":28.899999618530273},{"d":-16,"datum":"2026-09-16","aktie":6.89,"dax":2.34,"kurs":28.840000152587891},{"d":-15,"datum":"2026-09-17","aktie":4.89,"dax":3.06,"kurs":28.299999237060547},{"d":-14,"datum":"2026-09-18","aktie":0.48,"dax":1.41,"kurs":27.110000610351559},{"d":-13,"datum":"2026-09-21","aktie":1.15,"dax":2.49,"kurs":27.290000915527344},{"d":-12,"datum":"2026-09-22","aktie":0.48,"dax":2.51,"kurs":27.110000610351559},{"d":-11,"datum":"2026-09-23","aktie":-0.56,"dax":1.83,"kurs":26.829999923706055},{"d":-10,"datum":"2026-09-24","aktie":-0.33,"dax":1.25,"kurs":26.889999389648441},{"d":-9,"datum":"2026-09-25","aktie":0.07,"dax":1.82,"kurs":27},{"d":-8,"datum":"2026-09-28","aktie":-1.15,"dax":1.69,"kurs":26.670000076293945},{"d":-7,"datum":"2026-09-29","aktie":-2.15,"dax":1.79,"kurs":26.399999618530273},{"d":-6,"datum":"2026-09-30","aktie":-3.22,"dax":0.99,"kurs":26.110000610351559},{"d":-5,"datum":"2026-10-01","aktie":-3.37,"dax":-0.06,"kurs":26.069999694824219},{"d":-4,"datum":"2026-10-02","aktie":-1.56,"dax":1.11,"kurs":26.559999465942383},{"d":-3,"datum":"2026-10-05","aktie":-0.56,"dax":1.21,"kurs":26.829999923706055},{"d":-2,"datum":"2026-10-06","aktie":-2.11,"dax":1.99,"kurs":26.409999847412109},{"d":-1,"datum":"2026-10-07","aktie":0.04,"dax":0.61,"kurs":26.989999771118164},{"d":0,"datum":"2026-10-08","aktie":0.07,"dax":0,"kurs":27}],"analysten":{"ziel":36.42778,"hoch":43.0,"tief":28.1,"anzahl":18,"empfehlung":"buy"},"news":{"zeit":"2026-10-08 14:39","quelle":"WirtschaftsWoche","signal":"","titel":"Anleihe Telefónica: Dieser Telefónica-Bond verspricht mehr als vier Prozent Rendite","link":"https://www.wiwo.de/finanzen/boerse/anleihe-telefonica-dieser-telefonica-bond-verspricht-mehr-als-vier-prozent-rendite/100260145.html"}},{"symbol":"MBG.DE","name":"Mercedes-Benz Group AG","datum":"2026-10-08","kurs":39.19,"waehrung":"EUR","punkte":7,"gruende":["37 % unter 52W-Hoch","KGV 5,8","Dividende 8,8 %","Analysten: 2.3 - Buy","faellt noch stark"],"verlauf":[{"d":-20,"datum":"2026-09-10","aktie":19.56,"dax":1.63,"kurs":46.854999542236328},{"d":-19,"datum":"2026-09-11","aktie":19.11,"dax":2.47,"kurs":46.680000305175781},{"d":-18,"datum":"2026-09-14","aktie":19.05,"dax":1.95,"kurs":46.654998779296875},{"d":-17,"datum":"2026-09-15","aktie":18.81,"dax":1.8,"kurs":46.560001373291016},{"d":-16,"datum":"2026-09-16","aktie":15.76,"dax":2.34,"kurs":45.3650016784668},{"d":-15,"datum":"2026-09-17","aktie":17.87,"dax":3.06,"kurs":46.194999694824219},{"d":-14,"datum":"2026-09-18","aktie":12.26,"dax":1.41,"kurs":43.994998931884766},{"d":-13,"datum":"2026-09-21","aktie":11.42,"dax":2.49,"kurs":43.665000915527344},{"d":-12,"datum":"2026-09-22","aktie":10.92,"dax":2.51,"kurs":43.470001220703125},{"d":-11,"datum":"2026-09-23","aktie":7.44,"dax":1.83,"kurs":42.104999542236328},{"d":-10,"datum":"2026-09-24","aktie":5.24,"dax":1.25,"kurs":41.244998931884766},{"d":-9,"datum":"2026-09-25","aktie":5.35,"dax":1.82,"kurs":41.284999847412109},{"d":-8,"datum":"2026-09-28","aktie":5.72,"dax":1.69,"kurs":41.430000305175781},{"d":-7,"datum":"2026-09-29","aktie":3.76,"dax":1.79,"kurs":40.665000915527344},{"d":-6,"datum":"2026-09-30","aktie":3.59,"dax":0.99,"kurs":40.595001220703125},{"d":-5,"datum":"2026-10-01","aktie":2.22,"dax":-0.06,"kurs":40.060001373291016},{"d":-4,"datum":"2026-10-02","aktie":1.37,"dax":1.11,"kurs":39.724998474121094},{"d":-3,"datum":"2026-10-05","aktie":2.58,"dax":1.21,"kurs":40.200000762939453},{"d":-2,"datum":"2026-10-06","aktie":3.85,"dax":1.99,"kurs":40.700000762939453},{"d":-1,"datum":"2026-10-07","aktie":1.63,"dax":0.61,"kurs":39.830001831054688},{"d":0,"datum":"2026-10-08","aktie":-0.42,"dax":0,"kurs":39.025001525878906}],"analysten":{"ziel":55.37,"hoch":73.8,"tief":36.0,"anzahl":20,"empfehlung":"buy"},"news":[{"zeit":"2026-10-08 14:39","quelle":"Manager Magazin","signal":"negativ","titel":"Dax sackt ab, Fresenius Medical Care bricht ein, Wall Street strauchelt","link":"https://www.manager-magazin.de/finanzen/boerse/boerse-dax-im-minus-oelpreise-hoch-a-0ac3e5e7-25c0-4dbc-95a8-fc56a91a0111#ref=rss"},{"zeit":"2026-10-08 14:39","quelle":"n-tv","signal":"","titel":"Erfreuliche Signale aus Europa: Schwaches China-Geschäft zehrt an Mercedes","link":"https://www.n-tv.de/wirtschaft/Schwaches-China-Geschaeft-zehrt-an-Mercedes-id31392212.html"},{"zeit":"2026-10-08 14:39","quelle":"Handelsblatt Unternehmen","signal":"","titel":"Autoindustrie: Diese beiden SUVs entscheiden die Aufholjagd von BMW und Mercedes – einer liegt deutlich vorne","link":"https://www.handelsblatt.com/unternehmen/industrie/bmw-gegen-mercedes-so-steht-es-im-duell-der-schicksalsmodelle/100258039.html"},{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"","titel":"Ihre wichtigsten Termine: PepsiCo, Mercedes-Benz, Südzucker, Airbus und TSMC stehen heute im Fokus!","link":"https://www.wallstreet-online.de/nachricht/21492148-wichtigsten-termine-pepsico-mercedes-benz-suedzucker-airbus-tsmc-stehen-fokus"}]}],"watchlist":[{"symbol":"SAP.DE","name":"SAP","waehrung":"EUR","kaufenUnter":175,"verkaufenUeber":240,"tage":["2026-06-05","2026-06-08","2026-06-09","2026-06-10","2026-06-11","2026-06-12","2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-19","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-03","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-07","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-14","2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23","2026-09-24","2026-09-25","2026-09-28","2026-09-29","2026-09-30","2026-10-01","2026-10-02","2026-10-05","2026-10-06","2026-10-07","2026-10-08"],"kurse":[161.48,158.1,154.7,149.7,139.9,140.26,143.18,142.9,141.18,134.86,134.14,132.22,134.52,134.86,132.28,135.14,136.64,134,140.88,141.72,139.64,140.06,143.9,137.96,137.74,137.58,140.72,136.72,136.98,137.64,137.92,138.26,136.42,132.04,128.32,140.2,151.28,159.24,162.04,155.92,157.68,164.64,167.38,169.26,170.98,177.96,179.3,180.7,175.96,175.38,180.14,179.58,182.5,185.9,185.64,188.12,187.2,185.46,180.02,189.88,191.32,190.9,184.26,181.44,185.58,185.68,182.8,181.7,182.86,177.82,177.26,186.26,187.08,186.56,188,183.12,182.86,182.32,186.46,184.18,185.92,184.02,185.32,185.66,186.74,183.92,185.04,188.6,187.62,188.7],"analysten":{"ziel":210.38615,"hoch":290.0,"tief":160.0,"anzahl":26,"empfehlung":"strong_buy"},"news":[{"zeit":"2026-10-08 14:39","quelle":"Onvista","signal":"","titel":"Trotz der Kurszielerhöhung bleibe ich bei SAP vorsichtig","link":"https://www.onvista.de/news/2026/10-06-trotz-der-kurszielerhoehung-bleibe-ich-bei-sap-vorsichtig-40338625-19-26561158"},{"zeit":"2026-10-08 14:39","quelle":"Onvista","signal":"","titel":"GEA auf Rekordhoch, Micron vor Rückkäufen, Intel mit Risiko?","link":"https://www.onvista.de/news/2026/10-06-gea-auf-rekordhoch-micron-vor-rueckkaeufen-intel-mit-risiko-40338625-19-26561062"},{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"positiv","titel":"Aktie vor Zahlen kaufen: Angst vor KI? SAP wird mit nächster Übernahme selbst zur KI-Macht!","link":"https://www.wallstreet-online.de/nachricht/21484942-aktie-zahlen-kaufen-angst-ki-sap-naechster-uebernahme-ki-macht"},{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"positiv","titel":"Buy or Goodbye?: SAP, Continental, Meta und Daimler Truck – Die Analystenstimmen des Tages","link":"https://www.wallstreet-online.de/nachricht/21495637-buy-or-goodbye-sap-continental-daimler-truck-analystenstimmen"},{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"","titel":"Seltene Erden Aktien: Marvell: Derivat zieht kräftig an | SAP: Übernahme | Porsche: Neue Pläne","link":"https://www.wallstreet-online.de/video/21489850-seltene-erden-aktien-marvell-derivat-kraeftig-sap-uebernahme-porsche-plaene"}]},{"symbol":"ALV.DE","name":"Allianz","waehrung":"EUR","kaufenUnter":390,"verkaufenUeber":460,"tage":["2026-06-05","2026-06-08","2026-06-09","2026-06-10","2026-06-11","2026-06-12","2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-19","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-03","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-07","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-14","2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23","2026-09-24","2026-09-25","2026-09-28","2026-09-29","2026-09-30","2026-10-01","2026-10-02","2026-10-05","2026-10-06","2026-10-07","2026-10-08"],"kurse":[372.8,374.1,377.9,381.5,383.3,386.4,394.7,399,400.2,400,400.4,406.6,405.2,404.5,407.1,407.9,408.8,414.1,414.1,418.4,419.8,420.2,422.8,418.5,422.7,421.6,421,421,416.4,419.6,422.9,422.8,422.8,426.1,424.4,427.1,430.4,432.4,428.2,431.5,432.5,432.9,434.7,436.6,440.7,433.5,437.7,435.7,438.9,437.8,442.7,438.6,442,438,438.3,440.8,445.4,450,451.7,445.2,453,450.8,451.8,449.2,453.3,450.6,447.4,445.4,437.1,439.5,442.3,444.5,444.6,449.2,451.1,443.3,445.1,430.2,413.1,419.2,423.5,425.5,422.8,416.3,412,416.2,419.2,420.7,417.3,415.9],"analysten":{"ziel":446.01578,"hoch":684.0,"tief":353.0,"anzahl":16,"empfehlung":"hold"},"news":[{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"","titel":"Neue Gripen-Allianz: Wichtiger Rüstungsdeal: Saab stärkt seine Kampfjet-Macht","link":"https://www.wallstreet-online.de/nachricht/21494005-gripen-allianz-wichtiger-ruestungsdeal-saab-staerkt-kampfjet-macht"},{"zeit":"2026-10-08 14:39","quelle":"Handelsblatt Unternehmen","signal":"","titel":"Deutschland-Gipfel: „Wir befinden uns im perfekten Sturm“","link":"https://www.handelsblatt.com/unternehmen/industrie/deutschland-gipfel-wir-befinden-uns-im-perfekten-sturm/100260468.html"}]},{"symbol":"RHM.DE","name":"Rheinmetall","waehrung":"EUR","kaufenUnter":850,"verkaufenUeber":1200,"tage":["2026-06-05","2026-06-08","2026-06-09","2026-06-10","2026-06-11","2026-06-12","2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-19","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-03","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-07","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-14","2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23","2026-09-24","2026-09-25","2026-09-28","2026-09-29","2026-09-30","2026-10-01","2026-10-02","2026-10-05","2026-10-06","2026-10-07","2026-10-08"],"kurse":[1209.8,1199.8,1207.2,1197.2,1220,1205.6,1150.2,1145.6,1170.2,1178.6,1202.6,1189.4,1166.6,949,949,946.6,970.9,990.5,1050.6,1115,1093.4,1130,1111.6,1058.8,1013.2,992,979.2,979.9,976.1,963.9,984.2,990.3,995.4,1007.8,1017,1037.6,1050.6,1086.8,1153.4,1139.6,1140,1175,1200.8,1200.6,1159,1146.4,1142.2,1142.2,1168.2,1164.6,1202,1214,1213.8,1178.8,1162.2,1155.4,1125.2,1118.2,1138.8,1173.2,1154.6,1110.8,1079.8,1090.4,1070.2,1034,1020.8,1051.8,1012.4,1016.4,990.6,996.7,1028.6,1013,1016.2,1011.8,1010.6,991.4,1025,990,982.4,966.3,960.4,956.4,945.8,956.9,980.2,953,926.2,935.6],"analysten":{"ziel":1607.9524,"hoch":2380.0,"tief":1050.0,"anzahl":21,"empfehlung":"strong_buy"},"news":[{"zeit":"2026-10-08 14:39","quelle":"Onvista","signal":"","titel":"Porsche will sparen – Marvell setzt auf KI-Wachstum","link":"https://www.onvista.de/news/2026/10-07-porsche-will-sparen-marvell-setz-auf-ki-wachstum-40338625-19-26561450"},{"zeit":"2026-10-08 14:39","quelle":"Manager Magazin","signal":"","titel":"Börse: Dax fällt auf Zweimonatstief, Schaeffler und Aumovio rutschen ab, Rheinmetall gewinnt","link":"https://www.manager-magazin.de/finanzen/boerse/boerse-dax-bleibt-angeschlagen-gewinnmitnahmen-an-der-wall-street-a-62f0fceb-1533-4900-a681-000531206765#ref=rss"},{"zeit":"2026-10-08 14:39","quelle":"Manager Magazin","signal":"","titel":"Börse: Dax steigt, Ölpreis unter 100 Dollar, Pharmawerte gefragt","link":"https://www.manager-magazin.de/finanzen/boerse/boerse-wall-street-stuetzt-dax-oelpreis-bleibt-hoch-a-110e336c-f6a5-4b45-855f-925339f5053e#ref=rss"},{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"","titel":"Satelliten für die Bundeswehr: Neue Milliarden für Rheinmetall? Der Konzern setzt auf den Weltraum","link":"https://www.wallstreet-online.de/nachricht/21483907-satelliten-bundeswehr-milliarden-rheinmetall-konzern-weltraum"},{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"","titel":"Neuer Liebling unter Experten: Nicht mehr Rheinmetall, sondern Hensoldt ist jetzt der neue Analysten-Favorit!","link":"https://www.wallstreet-online.de/nachricht/21479710-liebling-experten-rheinmetall-hensoldt-analysten-favorit"},{"zeit":"2026-10-08 14:39","quelle":"Onvista","signal":"","titel":"Rheinmetall: Ich sehe 900 Euro als entscheidend","link":"https://www.onvista.de/news/2026/10-07-rheinmetall-ich-sehe-900-euro-als-entscheidend-40338625-19-26561550"}]},{"symbol":"AAPL","name":"Apple","waehrung":"USD","kaufenUnter":300,"verkaufenUeber":360,"tage":["2026-06-02","2026-06-03","2026-06-04","2026-06-05","2026-06-08","2026-06-09","2026-06-10","2026-06-11","2026-06-12","2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-14","2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23","2026-09-24","2026-09-25","2026-09-28","2026-09-29","2026-09-30","2026-10-01","2026-10-02","2026-10-05","2026-10-06","2026-10-07","2026-10-08"],"kurse":[315.2,310.26,311.23,307.34,301.54,290.55,291.58,295.63,291.13,296.42,299.24,295.95,298.01,297.01,294.3,293.08,275.15,283.78,281.74,289.36,294.38,308.63,312.66,310.66,313.39,316.22,315.32,317.31,314.86,327.5,333.26,333.74,326.59,327.74,325.89,321.66,333.02,336.91,340.08,338.19,333.43,308.91,303.42,309.38,311,312.41,313.33,308.26,304.91,302.25,305.26,305.93,305.59,310.03,316.83,311.3,309.35,310.34,309.9,313.45,314.58,319.7,316.85,325.13,324.96,328.21,319.97,316.22,315.34,326.57,332.27,333.08,331.34,332.41,337,336.13,338.98,339.75,337.02,335.92,341.07,338.4,329.4,333.02,330.32,333.69,332.89,333.63,336.67,336.47],"analysten":{"ziel":328.09384,"hoch":405.0,"tief":215.0,"anzahl":39,"empfehlung":"buy"},"news":[{"zeit":"2026-10-08 15:16","quelle":"Bloomberg Business","signal":"","titel":"Power On Podcast: Ternus Is Remaking Apple. How Far Will He Go?","link":"https://www.bloomberg.com/news/audio/2026-10-08/power-on-podcast-ternus-is-remaking-apple-how-far-will-he-go"},{"zeit":"2026-10-08 15:16","quelle":"Bloomberg Technology","signal":"","titel":"Apple Watch Series 12, Ultra 4 New Features Aren\u0027t Enough to Beat Oura, Whoop","link":"https://www.bloomberg.com/news/articles/2026-10-08/apple-watch-series-12-ultra-4-new-features-aren-t-enough-to-beat-oura-whoop"},{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"","titel":"KI-Boom mit kleinem Dämpfer: TSMC: Umsatz springt im September um 54,6 % – doch ein Detail sticht heraus","link":"https://www.wallstreet-online.de/nachricht/21493612-ki-boom-kleinem-daempfer-tsmc-umsatz-springt-september-54-6-detail-sticht"},{"zeit":"2026-10-08 14:39","quelle":"Manager Magazin","signal":"","titel":"Brasilien-Wahlausgang treibt Märkte: Abseits der KI-Rallye – das sind unsere Anlagetipps","link":"https://www.manager-magazin.de/finanzen/geldanlage/brasilien-wahlausgang-treibt-maerkte-abseits-der-ki-rallye-das-sind-unsere-anlagetipps-a-9f05ff37-72f2-4ab3-9d4c-ad914a3d34ce#ref=rss"}]},{"symbol":"NVDA","name":"Nvidia","waehrung":"USD","kaufenUnter":200,"verkaufenUeber":260,"tage":["2026-06-02","2026-06-03","2026-06-04","2026-06-05","2026-06-08","2026-06-09","2026-06-10","2026-06-11","2026-06-12","2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-14","2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23","2026-09-24","2026-09-25","2026-09-28","2026-09-29","2026-09-30","2026-10-01","2026-10-02","2026-10-05","2026-10-06","2026-10-07","2026-10-08"],"kurse":[222.82,214.75,218.66,205.1,208.64,208.19,200.42,204.87,205.19,212.45,207.41,204.65,210.69,208.65,200.04,199,195.74,192.53,194.97,200.09,197.58,194.83,195.55,196.93,204.12,202.78,210.96,203.53,211.8,212.5,207.4,202.81,203.28,207.29,212.06,208.76,206.84,196.51,197.01,190.01,195.04,200.75,206.64,211.94,219.22,218.99,223.96,217.55,217.5,224.09,225.3,225.16,225.01,219.74,217.56,216.85,214.72,208.48,213.05,209.66,227.98,217.55,220.78,217.44,224.41,228.45,230.36,225.73,223.67,218.36,218.29,210.96,212.17,213.9,219.34,222.27,227.38,228.87,225.51,224.58,225.07,228.86,227.21,228.38,230.86,233.95,238.9,239.24,237.47,234.23],"analysten":{"ziel":328.71695,"hoch":515.0,"tief":180.0,"anzahl":59,"empfehlung":"strong_buy"},"news":[{"zeit":"2026-10-08 15:16","quelle":"Bloomberg Technology","signal":"neuling","titel":"Nvidia-Backed IPO’s Cratering Demand Sends Warning on AI Funding","link":"https://www.bloomberg.com/news/articles/2026-10-08/nvidia-backed-ipo-s-cratering-demand-sends-warning-on-ai-funding"},{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"","titel":"Mehr Chips für KI: AMDs Mega-Offensive: Wird Nvidia jetzt ernsthaft herausgefordert?","link":"https://www.wallstreet-online.de/nachricht/21482932-chips-ki-amds-mega-offensive-nvidia-ernsthaft-herausgefordert"},{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"","titel":"Energie-Infrastruktur-Aktien: Nvidia: Bald 6 Billionen $ wert | AMD: Hohe Nachfrage | Schneider E.: Übernahme","link":"https://www.wallstreet-online.de/video/21484168-energie-infrastruktur-aktien-nvidia-6-billionen-wert-amd-hohe-nachfrage-schneider-e-uebernahme"},{"zeit":"2026-10-08 14:39","quelle":"Manager Magazin","signal":"","titel":"Brasilien-Wahlausgang treibt Märkte: Abseits der KI-Rallye – das sind unsere Anlagetipps","link":"https://www.manager-magazin.de/finanzen/geldanlage/brasilien-wahlausgang-treibt-maerkte-abseits-der-ki-rallye-das-sind-unsere-anlagetipps-a-9f05ff37-72f2-4ab3-9d4c-ad914a3d34ce#ref=rss"},{"zeit":"2026-10-08 14:39","quelle":"WirtschaftsWoche","signal":"","titel":"BörsenTag: Warum die Rekorde an der Wall Street täuschen","link":"https://www.wiwo.de/finanzen/boerse/nvidia-warum-die-rekorde-an-der-wall-street-taeuschen/100260081.html"},{"zeit":"2026-10-08 14:39","quelle":"n-tv","signal":"","titel":"40-Milliarden-Mega-Deal: SpaceX plant wohl massive Investition in Nvidia-Chips","link":"https://www.n-tv.de/wirtschaft/SpaceX-plant-wohl-massive-Investition-in-Nvidia-Chips-id31390576.html"},{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"","titel":"Seltene Erden Aktien: Marvell: Derivat zieht kräftig an | SAP: Übernahme | Porsche: Neue Pläne","link":"https://www.wallstreet-online.de/video/21489850-seltene-erden-aktien-marvell-derivat-kraeftig-sap-uebernahme-porsche-plaene"},{"zeit":"2026-10-08 14:39","quelle":"wallstreet-online","signal":"","titel":"KI-Boom mit kleinem Dämpfer: TSMC: Umsatz springt im September um 54,6 % – doch ein Detail sticht heraus","link":"https://www.wallstreet-online.de/nachricht/21493612-ki-boom-kleinem-daempfer-tsmc-umsatz-springt-september-54-6-detail-sticht"}]}],"gurus":[{"name":"Berkshire Hathaway (Warren Buffett)","code":"BRK","periode":"Q2 2026","stichtag":"30 Jun 2026","abgerufen":"2026-10-08","positionen":[{"symbol":"AAPL","firma":"Apple Inc.","anteil":22.04,"aktivitaet":"","aenderung":null,"stueck":227917808,"kursQuartal":289.36,"wert":65950296000,"kursAktuell":336.67,"seitQuartal":16.35},{"symbol":"AXP","firma":"American Express","anteil":17.14,"aktivitaet":"","aenderung":null,"stueck":151610700,"kursQuartal":338.25,"wert":51282319000,"kursAktuell":304.25,"seitQuartal":-10.05},{"symbol":"KO","firma":"Coca Cola Co.","anteil":10.86,"aktivitaet":"","aenderung":null,"stueck":400000000,"kursQuartal":81.27,"wert":32507999000,"kursAktuell":85.82,"seitQuartal":5.6},{"symbol":"GOOGL","firma":"Alphabet Inc.","anteil":9.41,"aktivitaet":"Aufgestockt","aenderung":45.24,"stueck":78791167,"kursQuartal":357.37,"wert":28157600000,"kursAktuell":350.5,"seitQuartal":-1.92},{"symbol":"BAC","firma":"Bank of America Corp.","anteil":9.2,"aktivitaet":"Reduziert","aenderung":5.89,"stueck":483394015,"kursQuartal":56.98,"wert":27543792000,"kursAktuell":53.52,"seitQuartal":-6.07},{"symbol":"CVX","firma":"Chevron Corp.","anteil":4.67,"aktivitaet":"","aenderung":null,"stueck":84375856,"kursQuartal":165.76,"wert":13986142000,"kursAktuell":205.15,"seitQuartal":23.76},{"symbol":"OXY","firma":"Occidental Petroleum","anteil":4.3,"aktivitaet":"","aenderung":null,"stueck":264941431,"kursQuartal":48.57,"wert":12868205000,"kursAktuell":58.21,"seitQuartal":19.85},{"symbol":"CB","firma":"Chubb Limited","anteil":3.9,"aktivitaet":"","aenderung":null,"stueck":34249183,"kursQuartal":340.74,"wert":11670067000,"kursAktuell":334.7,"seitQuartal":-1.77},{"symbol":"MCO","firma":"Moody\u0027s Corp.","anteil":3.73,"aktivitaet":"","aenderung":null,"stueck":24669778,"kursQuartal":452.92,"wert":11173436000,"kursAktuell":449.63,"seitQuartal":-0.73},{"symbol":"GOOG","firma":"Alphabet Inc. CL C","anteil":3.21,"aktivitaet":"Aufgestockt","aenderung":658.35,"stueck":27188433,"kursQuartal":353.33,"wert":9606489000,"kursAktuell":347.37,"seitQuartal":-1.69},{"symbol":"KHC","firma":"Kraft Heinz Co.","anteil":2.57,"aktivitaet":"","aenderung":null,"stueck":325634818,"kursQuartal":23.62,"wert":7691494000,"kursAktuell":21.98,"seitQuartal":-6.94},{"symbol":"DVA","firma":"DaVita HealthCare Partners","anteil":2.15,"aktivitaet":"Reduziert","aenderung":4.05,"stueck":28880209,"kursQuartal":222.48,"wert":6425269000,"kursAktuell":176.78,"seitQuartal":-20.54},{"symbol":"DAL","firma":"Delta Air Lines Inc.","anteil":1.79,"aktivitaet":"Aufgestockt","aenderung":43.99,"stueck":57320000,"kursQuartal":93.66,"wert":5368591000,"kursAktuell":82.97,"seitQuartal":-11.41},{"symbol":"SIRI","firma":"SiriusXM Holdings Inc","anteil":1.23,"aktivitaet":"","aenderung":null,"stueck":124807117,"kursQuartal":29.54,"wert":3686803000,"kursAktuell":25.95,"seitQuartal":-12.15},{"symbol":"VRSN","firma":"Verisign Inc.","anteil":0.76,"aktivitaet":"","aenderung":null,"stueck":8989880,"kursQuartal":251.56,"wert":2261495000,"kursAktuell":294.22,"seitQuartal":16.96},{"symbol":"KR","firma":"Kroger Co.","anteil":0.72,"aktivitaet":"Reduziert","aenderung":22,"stueck":39000000,"kursQuartal":55.53,"wert":2165671000,"kursAktuell":59.25,"seitQuartal":6.7},{"symbol":"ALLY","firma":"Ally Financial Inc.","anteil":0.41,"aktivitaet":"Reduziert","aenderung":6.9,"stueck":27000000,"kursQuartal":45.95,"wert":1240650000,"kursAktuell":37.37,"seitQuartal":-18.67},{"symbol":"LEN","firma":"Lennar Corp.","anteil":0.4,"aktivitaet":"Aufgestockt","aenderung":29.82,"stueck":13111741,"kursQuartal":90.49,"wert":1186482000,"kursAktuell":76.13,"seitQuartal":-15.87},{"symbol":"LLYVK","firma":"Liberty Media Corp. Series C Live","anteil":0.37,"aktivitaet":"","aenderung":null,"stueck":10587143,"kursQuartal":105.64,"wert":1118425000,"kursAktuell":98.11,"seitQuartal":-7.13},{"symbol":"NYT","firma":"New York Times CL A","anteil":0.37,"aktivitaet":"Aufgestockt","aenderung":3.65,"stueck":15700000,"kursQuartal":69.98,"wert":1098686000,"kursAktuell":64.9,"seitQuartal":-7.26},{"symbol":"COF","firma":"Capital One Financial","anteil":0.2,"aktivitaet":"Reduziert","aenderung":58.04,"stueck":3000000,"kursQuartal":200.62,"wert":601860000,"kursAktuell":195.91,"seitQuartal":-2.35},{"symbol":"LLYVA","firma":"Liberty Media Corp. Series A Live","anteil":0.17,"aktivitaet":"","aenderung":null,"stueck":4986588,"kursQuartal":101.26,"wert":504942000,"kursAktuell":94.69,"seitQuartal":-6.49},{"symbol":"LPX","firma":"Louisiana-Pacific Corp.","anteil":0.15,"aktivitaet":"","aenderung":null,"stueck":5664793,"kursQuartal":78.66,"wert":445593000,"kursAktuell":64.74,"seitQuartal":-17.7},{"symbol":"NUE","firma":"Nucor Corp.","anteil":0.14,"aktivitaet":"Reduziert","aenderung":52.45,"stueck":1857752,"kursQuartal":222.75,"wert":413814000,"kursAktuell":246.44,"seitQuartal":10.64},{"symbol":"M","firma":"Macy\u0027s Inc.","anteil":0.06,"aktivitaet":"Aufgestockt","aenderung":141.82,"stueck":7347426,"kursQuartal":23.55,"wert":173031000,"kursAktuell":22.79,"seitQuartal":-3.23},{"symbol":"NVR","firma":"NVR Inc.","anteil":0.03,"aktivitaet":"","aenderung":null,"stueck":11112,"kursQuartal":6813.44,"wert":75711000,"kursAktuell":5931.62,"seitQuartal":-12.94},{"symbol":"JEF","firma":"Jefferies Financial Group Inc.","anteil":0.01,"aktivitaet":"","aenderung":null,"stueck":433558,"kursQuartal":49.98,"wert":21669000,"kursAktuell":44.14,"seitQuartal":-11.68},{"symbol":"LEN.B","firma":"Lennar Corp. CL B","anteil":0.01,"aktivitaet":"Aufgestockt","aenderung":25.42,"stueck":298117,"kursQuartal":88.71,"wert":26446000,"kursAktuell":75.75,"seitQuartal":-14.61},{"symbol":"DHI","firma":"D.R. Horton","anteil":0,"aktivitaet":"Neu gekauft","aenderung":null,"stueck":3564,"kursQuartal":163.02,"wert":581000,"kursAktuell":133.28,"seitQuartal":-18.24}],"news":null}],"bekannt":["SAP.DE","ALV.DE","RHM.DE","AAPL","NVDA","ADS.DE","AIR.DE","ALV.DE","BAS.DE","BAYN.DE","BEI.DE","BMW.DE","BNR.DE","CBK.DE","CON.DE","DB1.DE","DBK.DE","DHL.DE","DTE.DE","DTG.DE","ENR.DE","EOAN.DE","FME.DE","FRE.DE","G1A.DE","HEI.DE","HEN3.DE","HNR1.DE","IFX.DE","MBG.DE","MRK.DE","MTX.DE","MUV2.DE","QIA.DE","RHM.DE","RWE.DE","SAP.DE","SHL.DE","SIE.DE","SRT3.DE","SY1.DE","VNA.DE","VOW3.DE","ZAL.DE","AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","ASML.AS","NOVO-B.CO","NESN.SW"]};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const nf = (x, d = 2) => x == null ? '-' : x.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = x => x == null ? '-' : (x >= 0 ? '+' : '') + nf(x, 1) + ' %';
+const cls = x => x >= 0 ? 'pos' : 'neg';
+const datum = s => s ? s.slice(8, 10) + '.' + s.slice(5, 7) + '.' : '';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const empf = { strong_buy: 'Starker Kauf', buy: 'Kaufen', hold: 'Halten', underperform: 'Untergewichten', sell: 'Verkaufen' };
+
+document.getElementById('stand').textContent =
+  `Stand ${D.erstellt} - Erwartungskorridor aus ${D.korridor.Faelle} vergleichbaren Faellen, Horizont ${D.horizont} Handelstage (~1 Monat)`;
+
+function newsListe(news) {
+  if (!news || !news.length) return '<p class="empty">Noch keine Schlagzeilen gesammelt - der Waechter sammelt ab jetzt laufend.</p>';
+  return '<ul class="news">' + news.map(n => `<li>
+      <a href="${esc(n.link)}" target="_blank" rel="noopener">${esc(n.titel)}</a>
+      <div class="meta">${esc(n.quelle)} - ${datum(n.zeit.slice(0, 10))} ${n.zeit.slice(11)}
+      ${(n.signal || '').split('+').filter(Boolean).map(s => `<span class="tag ${s}">${s}</span>`).join('')}</div></li>`).join('') + '</ul>';
+}
+
+function analystenText(a, kurs, wae) {
+  if (!a) return '<p class="empty">Kein Analysten-Kursziel verfuegbar.</p>';
+  const auf = (a.ziel / kurs - 1) * 100;
+  return `<p><b>${nf(a.ziel)} ${wae}</b> im Schnitt von ${a.anzahl} Analysten
+    (<span class="${cls(auf)}">${pct(auf)}</span> vom aktuellen Kurs), Spanne ${nf(a.tief)} bis ${nf(a.hoch)}.
+    Empfehlung: <b>${empf[a.empfehlung] || a.empfehlung || '-'}</b>.</p>`;
+}
+
+// --- KPIs Papierdepot ---
+const S = D.signale;
+if (S.length) {
+  const letzte = s => s.verlauf[s.verlauf.length - 1];
+  const r = S.map(s => letzte(s).aktie), rd = S.map(s => letzte(s).dax);
+  const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+  const laufend = S.filter(s => letzte(s).d > 0);
+  const besser = laufend.length ? `${laufend.filter(s => letzte(s).aktie > letzte(s).dax).length} von ${laufend.length}` : 'ab morgen';
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><span>Signale im Papierdepot</span><b>${S.length}</b></div>
+    <div class="kpi"><span>Durchschnitt seit Signal</span><b class="${cls(avg(r))}">${pct(avg(r))}</b></div>
+    <div class="kpi"><span>DAX im gleichen Zeitraum</span><b class="${cls(avg(rd))}">${pct(avg(rd))}</b></div>
+    <div class="kpi"><span>Besser als der DAX</span><b>${besser}</b></div>`;
+}
+
+// --- Signal-Karten ---
+const box = document.getElementById('signale');
+if (!S.length) box.innerHTML = '<p class="empty">Noch keine Signale.</p>';
+S.forEach((s, idx) => {
+  const v = s.verlauf, jetzt = v[v.length - 1], tag = Math.max(0, Math.min(jetzt.d, D.horizont));
+  const K = D.korridor;
+  let status = 'noch kein Handelstag seit Signal', stCls = '';
+  if (jetzt.d > 0) {
+    if (jetzt.aktie > K.p75[tag]) { status = 'besser als erwartet'; stCls = 'pos'; }
+    else if (jetzt.aktie < K.p25[tag]) { status = 'schlechter als erwartet'; stCls = 'neg'; }
+    else status = 'im Erwartungskorridor';
+  }
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `
+    <div class="head">
+      <h3>${esc(s.name)} <small>${esc(s.symbol)}</small></h3>
+      <div>
+        <span class="pill ${cls(jetzt.aktie)}">${pct(jetzt.aktie)} seit Signal</span>
+        <span class="pill">DAX ${pct(jetzt.dax)}</span>
+        <span class="pill ${stCls}">${status}</span>
+      </div>
+    </div>
+    <small class="meta">Signal am ${datum(s.datum)}${s.datum.slice(0, 4)} bei ${nf(s.kurs)} ${s.waehrung} - ${s.punkte} Scanner-Punkte -
+      heute ${nf(jetzt.kurs)} ${s.waehrung}, Handelstag ${jetzt.d} von ${D.horizont}</small>
+    <div class="grid">
+      <div class="chart"><canvas id="c${idx}"></canvas></div>
+      <div class="box">
+        <h4>Warum gemeldet (Scanner)</h4>
+        <div class="chips">${s.gruende.map(g => `<span class="chip">${esc(g)}</span>`).join('')}</div>
+        <h4>Erwartung</h4>
+        <p>Statistik: Nach ${D.horizont} Handelstagen im Median <b class="${cls(K.p50[D.horizont])}">${pct(K.p50[D.horizont])}</b>,
+          die Haelfte der Faelle zwischen ${pct(K.p25[D.horizont])} und ${pct(K.p75[D.horizont])}.</p>
+        ${analystenText(s.analysten, jetzt.kurs, s.waehrung)}
+      </div>
+    </div>
+    <div class="box" style="margin-top:12px"><h4>Schlagzeilen (Fachpresse)</h4>${newsListe(s.news)}</div>`;
+  box.appendChild(el);
+
+  // Achse: Handelstage relativ zum Signal, von -20 bis +20 (Zukunft leer)
+  const minD = v[0].d, maxD = Math.max(D.horizont, jetzt.d);
+  const labels = [], aktie = [], dax = [], lo = [], hi = [], med = [];
+  for (let d = minD; d <= maxD; d++) {
+    const p = v.find(x => x.d === d);
+    labels.push(p ? datum(p.datum) : 'T+' + d);
+    aktie.push(p ? p.aktie : null); dax.push(p ? p.dax : null);
+    const inK = d >= 0 && d <= D.horizont;
+    lo.push(inK ? K.p25[d] : null); hi.push(inK ? K.p75[d] : null); med.push(inK ? K.p50[d] : null);
+  }
+  new Chart(document.getElementById('c' + idx), {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: 'Erwartung (untere Grenze)', data: lo, borderWidth: 0, pointRadius: 0 },
+      { label: 'Erwartung (mittlere Haelfte)', data: hi, borderWidth: 0, pointRadius: 0, backgroundColor: css('--band'), fill: '-1' },
+      { label: 'Erwartung (Median)', data: med, borderColor: css('--accent'), borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0 },
+      { label: 'DAX', data: dax, borderColor: css('--dax'), borderWidth: 1.5, pointRadius: 0 },
+      { label: s.name, data: aktie, borderColor: jetzt.aktie >= 0 ? css('--up') : css('--down'), borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 4 },
+    ] },
+    options: {
+      maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, spanGaps: false,
+      plugins: {
+        legend: { labels: { color: css('--muted'), boxWidth: 12, filter: i => i.datasetIndex !== 0 } },
+        tooltip: { callbacks: { label: c => c.raw == null ? null : `${c.dataset.label}: ${pct(c.raw)}` } }
+      },
+      scales: {
+        x: { ticks: { color: css('--muted'), maxTicksLimit: 8 }, grid: { color: c => labels[c.index] === datum(s.datum) ? css('--muted') : 'transparent' } },
+        y: { ticks: { color: css('--muted'), callback: x => (x > 0 ? '+' : '') + x + ' %' }, grid: { color: css('--line') } }
+      }
+    }
+  });
+});
+
+// --- Watchlist-Karten ---
+const wbox = document.getElementById('watchlist');
+D.watchlist.forEach((w, idx) => {
+  const last = w.kurse[w.kurse.length - 1], first = w.kurse[0];
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `
+    <div class="head">
+      <h3>${esc(w.name)} <small>${esc(w.symbol)}</small></h3>
+      <div><span class="pill">${nf(last)} ${w.waehrung}</span>
+        <span class="pill ${cls(last / first - 1)}">${pct((last / first - 1) * 100)} in ${w.kurse.length} Handelstagen</span></div>
+    </div>
+    <div class="grid">
+      <div class="chart"><canvas id="w${idx}"></canvas></div>
+      <div class="box">
+        <h4>Deine Ziele</h4>
+        <p>Kaufen unter <b>${nf(w.kaufenUnter)}</b> (${pct((w.kaufenUnter / last - 1) * 100)}) -
+           Verkaufen ueber <b>${nf(w.verkaufenUeber)}</b> (${pct((w.verkaufenUeber / last - 1) * 100)})</p>
+        <h4>Analysten-Konsens</h4>
+        ${analystenText(w.analysten, last, w.waehrung)}
+      </div>
+    </div>
+    <div class="box" style="margin-top:12px"><h4>Schlagzeilen (Fachpresse)</h4>${newsListe(w.news)}</div>`;
+  wbox.appendChild(el);
+  const n = w.kurse.length, linie = (y) => Array(n).fill(y);
+  const ds = [
+    { label: 'Kurs', data: w.kurse, borderColor: css('--accent'), borderWidth: 2.5, pointRadius: 0 },
+    { label: 'Kaufziel', data: linie(w.kaufenUnter), borderColor: css('--up'), borderDash: [6, 4], borderWidth: 1.2, pointRadius: 0 },
+    { label: 'Verkaufsziel', data: linie(w.verkaufenUeber), borderColor: css('--down'), borderDash: [6, 4], borderWidth: 1.2, pointRadius: 0 },
+  ];
+  if (w.analysten) ds.push({ label: 'Analysten-Kursziel', data: linie(w.analysten.ziel), borderColor: css('--dax'), borderDash: [2, 3], borderWidth: 1.5, pointRadius: 0 });
+  new Chart(document.getElementById('w' + idx), {
+    type: 'line', data: { labels: w.tage.map(datum), datasets: ds },
+    options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: css('--muted'), boxWidth: 12 } },
+                 tooltip: { callbacks: { label: c => `${c.dataset.label}: ${nf(c.raw)} ${w.waehrung}` } } },
+      scales: { x: { ticks: { color: css('--muted'), maxTicksLimit: 8 }, grid: { display: false } },
+                y: { ticks: { color: css('--muted') }, grid: { color: css('--line') } } } }
+  });
+});
+
+// --- Guru-Karten ---
+const gbox = document.getElementById('gurus');
+if (!D.gurus || !D.gurus.length) gbox.innerHTML = '<p class="empty">Noch keine Guru-Depots geladen.</p>';
+(D.gurus || []).forEach((g, idx) => {
+  const P = g.positionen;
+  const farbe = a => a === 'Neu gekauft' || a === 'Aufgestockt' ? css('--up') : a === 'Reduziert' || a === 'Verkauft' ? css('--down') : css('--dax');
+  const bewegt = P.filter(p => p.aktivitaet);
+  const marke = s => D.bekannt.includes(s) ? ' <span class="tag neuling">deine Liste</span>' : '';
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `
+    <div class="head">
+      <h3>${esc(g.name)}</h3>
+      <div><span class="pill">${esc(g.periode)}</span> <span class="pill">Stichtag ${esc(g.stichtag)}</span> <span class="pill">${P.length} Aktien</span></div>
+    </div>
+    <small class="meta">Quelle: Pflichtmeldung (13F) an die US-Boersenaufsicht SEC, aufbereitet von
+      <a href="https://www.dataroma.com/m/holdings.php?m=${esc(g.code)}" target="_blank" rel="noopener">dataroma.com</a>.
+      Erscheint bis zu 45 Tage nach Quartalsende - zeigt also, was ${esc(g.name.split('(')[0].trim())} <i>damals</i> gemacht hat.</small>
+    <div class="grid">
+      <div class="chart" style="height:${Math.max(280, Math.min(P.length, 15) * 24)}px"><canvas id="g${idx}"></canvas></div>
+      <div class="box">
+        <h4>Bewegungen im Quartal</h4>
+        ${bewegt.length ? '<ul class="news">' + bewegt.map(p => `<li><b style="color:${farbe(p.aktivitaet)}">${p.aktivitaet}${p.aenderung ? ' ' + nf(p.aenderung, 0) + ' %' : ''}</b>
+          ${esc(p.firma)} <span class="meta">${esc(p.symbol)}</span>${marke(p.symbol)}
+          <div class="meta">${nf(p.anteil, 1)} % vom Depot - seit Quartalsende <span class="${cls(p.seitQuartal)}">${pct(p.seitQuartal)}</span></div></li>`).join('') + '</ul>'
+          : '<p class="empty">Keine Kaeufe oder Verkaeufe.</p>'}
+      </div>
+    </div>
+    <div class="box scroll" style="margin-top:12px"><h4>Groesste Positionen</h4>
+      <table><thead><tr><th>Aktie</th><th class="num">Anteil</th><th class="num">Kurs Quartalsende</th><th class="num">Kurs heute</th><th class="num">Seither</th></tr></thead><tbody>
+      ${P.slice(0, 15).map(p => `<tr><td>${esc(p.firma)} <span class="meta">${esc(p.symbol)}</span>${marke(p.symbol)}</td>
+        <td class="num">${nf(p.anteil, 1)} %</td><td class="num">${nf(p.kursQuartal)} $</td><td class="num">${nf(p.kursAktuell)} $</td>
+        <td class="num ${cls(p.seitQuartal)}">${pct(p.seitQuartal)}</td></tr>`).join('')}
+      </tbody></table></div>
+    <div class="box" style="margin-top:12px"><h4>Schlagzeilen ueber ${esc(g.name.split('(')[0].trim())}</h4>${newsListe(g.news)}</div>`;
+  gbox.appendChild(el);
+  const top = P.slice(0, 15);
+  new Chart(document.getElementById('g' + idx), {
+    type: 'bar',
+    data: { labels: top.map(p => p.symbol), datasets: [{ label: 'Anteil am Depot', data: top.map(p => p.anteil),
+      backgroundColor: top.map(p => farbe(p.aktivitaet)), borderRadius: 4 }] },
+    options: { indexAxis: 'y', maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: c => { const p = top[c.dataIndex]; return `${p.firma}: ${nf(p.anteil, 1)} %${p.aktivitaet ? ' - ' + p.aktivitaet : ''}`; } } } },
+      scales: { x: { ticks: { color: css('--muted'), callback: x => x + ' %' }, grid: { color: css('--line') } },
+                y: { ticks: { color: css('--muted') }, grid: { display: false } } } }
+  });
+});
+</script>
+</body>
+</html>
