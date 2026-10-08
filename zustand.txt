@@ -1,4 +1,5 @@
-﻿DTE.DE-scan	2026-10-08|7
+DTE.DE-scan	2026-10-08|7
+guru-BRK	Q2 2026
 ipo-2026-10-08	3
 MBG.DE-scan	2026-10-08|7
 VNA.DE-scan	2026-10-08|7
