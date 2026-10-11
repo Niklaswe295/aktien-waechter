@@ -1,1 +1,4 @@
 2026-10-08 16:39:51 Response status code does not indicate success: 400 (Bad Request).
+2026-10-11 14:17:41 Feed Handelsblatt: Response status code does not indicate success: 403 (Forbidden).
+2026-10-11 14:17:41 Feed Handelsblatt Unternehmen: Response status code does not indicate success: 403 (Forbidden).
+2026-10-11 14:17:42 Feed WirtschaftsWoche: Response status code does not indicate success: 403 (Forbidden).
