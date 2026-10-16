@@ -1,8 +1,8 @@
-BMW.DE-scan	2026-10-09|7
+BMW.DE-scan	2026-10-16|7
 DTE.DE-scan	2026-10-15|7
 guru-BRK	Q2 2026
 ipo-2026-10-08	3
 MBG.DE-scan	2026-10-15|8
-scan-zuletzt	2026-10-15
+scan-zuletzt	2026-10-16
 ueberblick-zuletzt	2026-10-15
 VNA.DE-scan	2026-10-15|8
