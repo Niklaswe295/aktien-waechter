@@ -4,5 +4,5 @@ guru-BRK	Q2 2026
 ipo-2026-10-08	3
 MBG.DE-scan	2026-10-22|7
 scan-zuletzt	2026-10-23
-ueberblick-zuletzt	2026-10-22
+ueberblick-zuletzt	2026-10-23
 VNA.DE-scan	2026-10-22|8
