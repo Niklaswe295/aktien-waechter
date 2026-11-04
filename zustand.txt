@@ -1,4 +1,5 @@
 AAPL-plus	2026-11-04
+ALV.DE-ueber	2026-11-04
 BMW.DE-scan	2026-11-02|8
 DTE.DE-scan	2026-10-29|7
 guru-BRK	Q2 2026
