@@ -8,5 +8,5 @@ ipo-2026-10-08	3
 MBG.DE-scan	2026-11-03|7
 NVDA-minus	2026-10-30
 scan-zuletzt	2026-11-04
-ueberblick-zuletzt	2026-11-03
+ueberblick-zuletzt	2026-11-04
 VNA.DE-scan	2026-10-29|7
