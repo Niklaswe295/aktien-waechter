@@ -1,5 +1,5 @@
 AAPL-plus	2026-11-04
-ALV.DE-ueber	2026-11-04
+ALV.DE-ueber	2026-11-05
 BMW.DE-scan	2026-11-02|8
 DTE.DE-scan	2026-10-29|7
 guru-BRK	Q2 2026
@@ -7,6 +7,8 @@ HEI.DE-scan	2026-10-29|7
 ipo-2026-10-08	3
 MBG.DE-scan	2026-11-03|7
 NVDA-minus	2026-10-30
+RHM.DE-minus	2026-11-05
+RHM.DE-unter	2026-11-05
 scan-zuletzt	2026-11-04
 ueberblick-zuletzt	2026-11-04
 VNA.DE-scan	2026-10-29|7
