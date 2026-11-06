@@ -11,6 +11,6 @@ NVDA-plus	2026-11-06
 NVDA-unter	2026-11-06
 RHM.DE-minus	2026-11-05
 RHM.DE-unter	2026-11-06
-scan-zuletzt	2026-11-05
+scan-zuletzt	2026-11-06
 ueberblick-zuletzt	2026-11-05
 VNA.DE-scan	2026-11-05|7
