@@ -6,11 +6,11 @@ guru-BRK	Q2 2026
 HEI.DE-scan	2026-10-29|7
 ipo-2026-10-08	3
 MBG.DE-scan	2026-11-05|8
-NVDA-minus	2026-11-05
+NVDA-minus	2026-11-10
 NVDA-plus	2026-11-06
-NVDA-unter	2026-11-09
+NVDA-unter	2026-11-10
 RHM.DE-minus	2026-11-05
 RHM.DE-unter	2026-11-09
-scan-zuletzt	2026-11-09
-ueberblick-zuletzt	2026-11-09
+scan-zuletzt	2026-11-10
+ueberblick-zuletzt	2026-11-10
 VNA.DE-scan	2026-11-05|7
