@@ -3,7 +3,7 @@
   "code": "BRK",
   "periode": "Q2 2026",
   "stichtag": "30 Jun 2026",
-  "abgerufen": "2026-11-10",
+  "abgerufen": "2026-11-11",
   "positionen": [
     {
       "symbol": "AAPL",
@@ -14,8 +14,8 @@
       "stueck": 227917808.0,
       "kursQuartal": 289.36,
       "wert": 65950296000.0,
-      "kursAktuell": 348.41,
-      "seitQuartal": 20.41
+      "kursAktuell": 355.01,
+      "seitQuartal": 22.69
     },
     {
       "symbol": "AXP",
@@ -26,8 +26,8 @@
       "stueck": 151610700.0,
       "kursQuartal": 338.25,
       "wert": 51282319000.0,
-      "kursAktuell": 324.51,
-      "seitQuartal": -4.06
+      "kursAktuell": 321.77,
+      "seitQuartal": -4.87
     },
     {
       "symbol": "KO",
@@ -38,8 +38,8 @@
       "stueck": 400000000.0,
       "kursQuartal": 81.27,
       "wert": 32507999000.0,
-      "kursAktuell": 96.76,
-      "seitQuartal": 19.06
+      "kursAktuell": 96.78,
+      "seitQuartal": 19.08
     },
     {
       "symbol": "GOOGL",
@@ -50,8 +50,8 @@
       "stueck": 78791167.0,
       "kursQuartal": 357.37,
       "wert": 28157600000.0,
-      "kursAktuell": 286.92,
-      "seitQuartal": -19.71
+      "kursAktuell": 295.08,
+      "seitQuartal": -17.43
     },
     {
       "symbol": "BAC",
@@ -62,8 +62,8 @@
       "stueck": 483394015.0,
       "kursQuartal": 56.98,
       "wert": 27543792000.0,
-      "kursAktuell": 50.68,
-      "seitQuartal": -11.06
+      "kursAktuell": 50.75,
+      "seitQuartal": -10.93
     },
     {
       "symbol": "CVX",
@@ -74,8 +74,8 @@
       "stueck": 84375856.0,
       "kursQuartal": 165.76,
       "wert": 13986142000.0,
-      "kursAktuell": 211.32,
-      "seitQuartal": 27.49
+      "kursAktuell": 212.54,
+      "seitQuartal": 28.22
     },
     {
       "symbol": "OXY",
@@ -86,8 +86,8 @@
       "stueck": 264941431.0,
       "kursQuartal": 48.57,
       "wert": 12868205000.0,
-      "kursAktuell": 56.8,
-      "seitQuartal": 16.94
+      "kursAktuell": 56.99,
+      "seitQuartal": 17.34
     },
     {
       "symbol": "CB",
@@ -98,8 +98,8 @@
       "stueck": 34249183.0,
       "kursQuartal": 340.74,
       "wert": 11670067000.0,
-      "kursAktuell": 369.79,
-      "seitQuartal": 8.53
+      "kursAktuell": 367.46,
+      "seitQuartal": 7.84
     },
     {
       "symbol": "MCO",
@@ -110,8 +110,8 @@
       "stueck": 24669778.0,
       "kursQuartal": 452.92,
       "wert": 11173436000.0,
-      "kursAktuell": 508.35,
-      "seitQuartal": 12.24
+      "kursAktuell": 512.8,
+      "seitQuartal": 13.22
     },
     {
       "symbol": "GOOG",
@@ -122,8 +122,8 @@
       "stueck": 27188433.0,
       "kursQuartal": 353.33,
       "wert": 9606489000.0,
-      "kursAktuell": 284.48,
-      "seitQuartal": -19.49
+      "kursAktuell": 292.3,
+      "seitQuartal": -17.27
     },
     {
       "symbol": "KHC",
@@ -134,8 +134,8 @@
       "stueck": 325634818.0,
       "kursQuartal": 23.62,
       "wert": 7691494000.0,
-      "kursAktuell": 24.3,
-      "seitQuartal": 2.88
+      "kursAktuell": 24.11,
+      "seitQuartal": 2.07
     },
     {
       "symbol": "DVA",
@@ -146,8 +146,8 @@
       "stueck": 28880209.0,
       "kursQuartal": 222.48,
       "wert": 6425269000.0,
-      "kursAktuell": 178.85,
-      "seitQuartal": -19.61
+      "kursAktuell": 179.1,
+      "seitQuartal": -19.5
     },
     {
       "symbol": "DAL",
@@ -158,8 +158,8 @@
       "stueck": 57320000.0,
       "kursQuartal": 93.66,
       "wert": 5368591000.0,
-      "kursAktuell": 91.67,
-      "seitQuartal": -2.12
+      "kursAktuell": 91.85,
+      "seitQuartal": -1.93
     },
     {
       "symbol": "SIRI",
@@ -170,8 +170,8 @@
       "stueck": 124807117.0,
       "kursQuartal": 29.54,
       "wert": 3686803000.0,
-      "kursAktuell": 32.02,
-      "seitQuartal": 8.4
+      "kursAktuell": 31.88,
+      "seitQuartal": 7.92
     },
     {
       "symbol": "VRSN",
@@ -182,8 +182,8 @@
       "stueck": 8989880.0,
       "kursQuartal": 251.56,
       "wert": 2261495000.0,
-      "kursAktuell": 309.59,
-      "seitQuartal": 23.07
+      "kursAktuell": 315.51,
+      "seitQuartal": 25.42
     },
     {
       "symbol": "KR",
@@ -194,8 +194,8 @@
       "stueck": 39000000.0,
       "kursQuartal": 55.53,
       "wert": 2165671000.0,
-      "kursAktuell": 69.03,
-      "seitQuartal": 24.31
+      "kursAktuell": 68.52,
+      "seitQuartal": 23.39
     },
     {
       "symbol": "ALLY",
@@ -206,8 +206,8 @@
       "stueck": 27000000.0,
       "kursQuartal": 45.95,
       "wert": 1240650000.0,
-      "kursAktuell": 37.75,
-      "seitQuartal": -17.85
+      "kursAktuell": 38.14,
+      "seitQuartal": -17.0
     },
     {
       "symbol": "LEN",
@@ -218,8 +218,8 @@
       "stueck": 13111741.0,
       "kursQuartal": 90.49,
       "wert": 1186482000.0,
-      "kursAktuell": 86.77,
-      "seitQuartal": -4.11
+      "kursAktuell": 85.07,
+      "seitQuartal": -5.99
     },
     {
       "symbol": "LLYVK",
@@ -230,8 +230,8 @@
       "stueck": 10587143.0,
       "kursQuartal": 105.64,
       "wert": 1118425000.0,
-      "kursAktuell": 107.7,
-      "seitQuartal": 1.95
+      "kursAktuell": 107.57,
+      "seitQuartal": 1.83
     },
     {
       "symbol": "NYT",
@@ -242,8 +242,8 @@
       "stueck": 15700000.0,
       "kursQuartal": 69.98,
       "wert": 1098686000.0,
-      "kursAktuell": 71.95,
-      "seitQuartal": 2.82
+      "kursAktuell": 72.24,
+      "seitQuartal": 3.23
     },
     {
       "symbol": "COF",
@@ -254,8 +254,8 @@
       "stueck": 3000000.0,
       "kursQuartal": 200.62,
       "wert": 601860000.0,
-      "kursAktuell": 196.02,
-      "seitQuartal": -2.29
+      "kursAktuell": 196.19,
+      "seitQuartal": -2.21
     },
     {
       "symbol": "LLYVA",
@@ -266,8 +266,8 @@
       "stueck": 4986588.0,
       "kursQuartal": 101.26,
       "wert": 504942000.0,
-      "kursAktuell": 103.66,
-      "seitQuartal": 2.37
+      "kursAktuell": 103.61,
+      "seitQuartal": 2.32
     },
     {
       "symbol": "LPX",
@@ -278,8 +278,8 @@
       "stueck": 5664793.0,
       "kursQuartal": 78.66,
       "wert": 445593000.0,
-      "kursAktuell": 75.97,
-      "seitQuartal": -3.42
+      "kursAktuell": 75.21,
+      "seitQuartal": -4.39
     },
     {
       "symbol": "NUE",
@@ -290,8 +290,8 @@
       "stueck": 1857752.0,
       "kursQuartal": 222.75,
       "wert": 413814000.0,
-      "kursAktuell": 256.1,
-      "seitQuartal": 14.97
+      "kursAktuell": 261.23,
+      "seitQuartal": 17.27
     },
     {
       "symbol": "M",
@@ -302,8 +302,8 @@
       "stueck": 7347426.0,
       "kursQuartal": 23.55,
       "wert": 173031000.0,
-      "kursAktuell": 25.2,
-      "seitQuartal": 7.01
+      "kursAktuell": 24.9,
+      "seitQuartal": 5.73
     },
     {
       "symbol": "NVR",
@@ -314,8 +314,8 @@
       "stueck": 11112.0,
       "kursQuartal": 6813.44,
       "wert": 75711000.0,
-      "kursAktuell": 6051.12,
-      "seitQuartal": -11.19
+      "kursAktuell": 5853.45,
+      "seitQuartal": -14.09
     },
     {
       "symbol": "JEF",
@@ -326,8 +326,8 @@
       "stueck": 433558.0,
       "kursQuartal": 49.98,
       "wert": 21669000.0,
-      "kursAktuell": 47.89,
-      "seitQuartal": -4.18
+      "kursAktuell": 47.87,
+      "seitQuartal": -4.22
     },
     {
       "symbol": "LEN.B",
@@ -338,8 +338,8 @@
       "stueck": 298117.0,
       "kursQuartal": 88.71,
       "wert": 26446000.0,
-      "kursAktuell": 84.77,
-      "seitQuartal": -4.44
+      "kursAktuell": 82.78,
+      "seitQuartal": -6.68
     },
     {
       "symbol": "DHI",
@@ -350,8 +350,8 @@
       "stueck": 3564.0,
       "kursQuartal": 163.02,
       "wert": 581000.0,
-      "kursAktuell": 149.47,
-      "seitQuartal": -8.31
+      "kursAktuell": 146.84,
+      "seitQuartal": -9.93
     }
   ]
 }
