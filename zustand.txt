@@ -8,9 +8,10 @@ ipo-2026-10-08	3
 MBG.DE-scan	2026-11-16|7
 NVDA-minus	2026-11-12
 NVDA-plus	2026-11-06
-NVDA-unter	2026-11-16
+NVDA-unter	2026-11-17
 RHM.DE-minus	2026-11-05
 RHM.DE-unter	2026-11-17
-scan-zuletzt	2026-11-16
-ueberblick-zuletzt	2026-11-16
+SAP.DE-minus	2026-11-17
+scan-zuletzt	2026-11-17
+ueberblick-zuletzt	2026-11-17
 VNA.DE-scan	2026-11-16|8
