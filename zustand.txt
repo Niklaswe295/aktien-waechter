@@ -10,7 +10,7 @@ NVDA-minus	2026-11-20
 NVDA-plus	2026-11-06
 NVDA-unter	2026-11-20
 RHM.DE-minus	2026-11-05
-RHM.DE-unter	2026-11-20
+RHM.DE-unter	2026-11-23
 SAP.DE-minus	2026-11-17
 scan-zuletzt	2026-11-20
 ueberblick-zuletzt	2026-11-20
